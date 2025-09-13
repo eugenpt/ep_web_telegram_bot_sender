@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Telegram Bot Interface</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; }
+    label { display: block; margin-top: 10px; }
+    input, textarea, button { width: 100%; margin-top: 5px; padding: 8px; }
+    textarea { resize: vertical; height: 100px; }
+    #updates { white-space: pre-wrap; background: #f5f5f5; padding: 10px; margin-top: 10px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h2>Telegram Bot Interface</h2>
+
+  <label for="token">Bot Token</label>
+  <input type="text" id="token" placeholder="123456:ABC-DEF..." />
+
+  <label for="chatId">Chat ID</label>
+  <input type="text" id="chatId" placeholder="Enter chat id" />
+
+  <button id="save">💾 Save Token & Chat ID</button>
+
+  <h3>Get Updates</h3>
+  <button id="getUpdates">📥 Get Updates</button>
+  <div id="updates"></div>
+
+  <h3>Send Message</h3>
+  <textarea id="message" placeholder="Type your message"></textarea>
+  <button id="send">📤 Send</button>
+
+  <script>
+    // Restore saved values
+    document.getElementById("token").value = localStorage.getItem("botToken") || "";
+    document.getElementById("chatId").value = localStorage.getItem("chatId") || "";
+
+    document.getElementById("save").onclick = () => {
+      localStorage.setItem("botToken", document.getElementById("token").value);
+      localStorage.setItem("chatId", document.getElementById("chatId").value);
+      alert("Saved locally!");
+    };
+
+async function apiCall(method, body = {}) {
+  const token = document.getElementById("token").value.trim();
+  if (!token) return alert("Enter bot token!");
+
+  const base = "https://ep-tg-proxy.onrender.com"; // <-- your Render URL
+  const url = `${base}/telegram/${token}/${method}`;
+
+  const params = Object.keys(body).length
+    ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
+    : {};
+
+  const res = await fetch(url, params);
+  return res.json();
+}
+
+
+    // Get Updates
+    document.getElementById("getUpdates").onclick = async () => {
+      const data = await apiCall("getUpdates");
+      const updatesDiv = document.getElementById("updates");
+      updatesDiv.textContent = JSON.stringify(data, null, 2);
+
+      if (data.result && data.result.length > 0) {
+        const last = data.result[data.result.length - 1];
+        if (last.message) {
+          const chatId = last.message.chat.id;
+          updatesDiv.textContent += `\n\n➡️ Last chat ID: ${chatId}`;
+        }
+      }
+    };
+
+    // Send Message
+    document.getElementById("send").onclick = async () => {
+      const chatId = document.getElementById("chatId").value.trim();
+      const text = document.getElementById("message").value.trim();
+      if (!chatId || !text) return alert("Chat ID and message required!");
+      const data = await apiCall("sendMessage", { chat_id: chatId, text });
+      alert("Message sent! " + JSON.stringify(data.ok));
+    };
+  </script>
+</body>
+</html>
