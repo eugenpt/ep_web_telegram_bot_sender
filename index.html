@@ -41,11 +41,13 @@
       alert("Saved locally!");
     };
 
+  base = "https://ep-tg-proxy.onrender.com"; // <-- your Render URL
+  base = "https://tg.eugen-pt.workers.dev";
+
 async function apiCall(method, body = {}) {
   const token = document.getElementById("token").value.trim();
   if (!token) return alert("Enter bot token!");
 
-  const base = "https://ep-tg-proxy.onrender.com"; // <-- your Render URL
   const url = `${base}/telegram/${token}/${method}`;
 
   const params = Object.keys(body).length
